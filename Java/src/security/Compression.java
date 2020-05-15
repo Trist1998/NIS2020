@@ -1,4 +1,4 @@
-package messaging;
+package security;
 
 public class Compression
 {

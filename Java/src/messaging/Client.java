@@ -1,5 +1,7 @@
 package messaging;
 
+import security.PGPMessageManager;
+
 import java.net.Socket;
 
 public class Client

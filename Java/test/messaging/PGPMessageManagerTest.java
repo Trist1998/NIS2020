@@ -2,6 +2,7 @@ package messaging;
 
 
 import org.junit.Test;
+import security.PGPMessageManager;
 import security.RSAEncryption;
 
 import java.security.KeyPair;

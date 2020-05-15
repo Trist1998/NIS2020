@@ -1,5 +1,7 @@
 package messaging;
 
+import security.PGPMessageManager;
+
 import java.io.*;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
