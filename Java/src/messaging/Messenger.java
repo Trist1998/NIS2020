@@ -1,7 +1,11 @@
 package messaging;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.net.Socket;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
 
@@ -63,7 +67,15 @@ public class Messenger
 
     private void sendMessage(String message) throws IOException, NoSuchAlgorithmException
     {
-        writer.write(securityManager.generatePGPMessage(message));
+        try
+        {
+            writer.write(securityManager.generatePGPMessage(message));
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
         writer.flush();
     }
 
@@ -84,7 +96,15 @@ public class Messenger
 
             if(line.trim().equals(MESSAGE_END))
             {
-                System.out.println(securityManager.openPGPMessage(message.getBytes()));
+                try
+                {
+                    System.out.println(securityManager.openPGPMessage(message.getBytes()));
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+
                 message = "";
             }
             else

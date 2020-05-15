@@ -8,6 +8,8 @@ import java.security.*;
 
 public class AESEncryption
 {
+    public static final String ALGORITHM_STRING = "AES";
+
     public AESEncryption()
     {
         Security.addProvider(new BouncyCastleProvider());
@@ -15,7 +17,7 @@ public class AESEncryption
 
     private static Cipher getCipherInstance() throws NoSuchPaddingException, NoSuchAlgorithmException
     {
-        return Cipher.getInstance("AES/CBC/PKCS5Padding");
+        return Cipher.getInstance("AES/ECB/PKCS5Padding");//TODO change to AES/CBC/PKCS5Padding
     }
 
     public static Key generateKey() throws NoSuchAlgorithmException
@@ -33,19 +35,6 @@ public class AESEncryption
         return new IvParameterSpec(random);
     }
 
-
-    public static byte[] encrypt(String message, Key key, IvParameterSpec ivSpec) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException
-    {
-        Cipher cipher = getCipherInstance();
-        cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
-        return cipher.doFinal(message.getBytes());
-    }
-
-    public static byte[] encrypt(String message, Key key) throws IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException
-    {
-        return encrypt(message.getBytes(), key);
-    }
-
     public static byte[] encrypt(byte[] message, Key key) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException
     {
         Cipher cipher = getCipherInstance();
@@ -53,17 +42,10 @@ public class AESEncryption
         return cipher.doFinal(message);
     }
 
-    public static String decrypt(byte[] cipherText, Key key, IvParameterSpec ivSpec) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException
-    {
-        Cipher cipher = getCipherInstance();
-        cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
-        return new String(cipher.doFinal(cipherText));
-    }
-
-    public static String decrypt(byte[] cipherText, Key key) throws BadPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException
+    public static byte[] decrypt(byte[] cipherText, Key key) throws BadPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException
     {
         Cipher cipher = getCipherInstance();
         cipher.init(Cipher.DECRYPT_MODE, key);
-        return new String(cipher.doFinal(cipherText));
+        return cipher.doFinal(cipherText);
     }
 }

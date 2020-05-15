@@ -19,7 +19,13 @@ public class Hashing
         return output;
     }
 
+
     public static boolean authenticateMessage(String message, byte[] digest)
+    {
+        return authenticateMessage(message.getBytes(), digest);
+    }
+
+    public static boolean authenticateMessage(byte[] message, byte[] digest)
     {
         try
         {
@@ -28,7 +34,7 @@ public class Hashing
         }
         catch (NoSuchAlgorithmException e)
         {
-            e.printStackTrace();//TODO Handle correctly
+            e.printStackTrace();
         }
         return false;
     }

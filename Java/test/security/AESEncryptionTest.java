@@ -5,7 +5,6 @@ package security;
 import org.junit.Test;
 
 import javax.crypto.*;
-import javax.crypto.spec.IvParameterSpec;
 
 import java.security.*;
 
@@ -21,13 +20,12 @@ public class AESEncryptionTest
         String message = "This is the secret test message";
 
         Key key = AESEncryption.generateKey();
-        IvParameterSpec ivParameterSpec = AESEncryption.getIvSpec();
 
         //Encryption
-        byte[] encryptedMessage = AESEncryption.encrypt(message, key, ivParameterSpec);
+        byte[] encryptedMessage = AESEncryption.encrypt(message.getBytes(), key);
 
         //Decryption
-        String decryptedMessage = AESEncryption.decrypt(encryptedMessage, key, ivParameterSpec);
+        String decryptedMessage = new String(AESEncryption.decrypt(encryptedMessage, key));
 
         System.out.println("Original Message -> " + message);
         System.out.print("Encrypted Message -> "); System.out.println(new String(encryptedMessage));
@@ -40,7 +38,7 @@ public class AESEncryptionTest
         String wrongKeyDecryptedMessage = "";
         try
         {
-            wrongKeyDecryptedMessage = AESEncryption.decrypt(encryptedMessage, differentKey, ivParameterSpec);
+            wrongKeyDecryptedMessage = new String(AESEncryption.decrypt(encryptedMessage, differentKey));
             assertNotEquals(message, wrongKeyDecryptedMessage);
         }
         catch (BadPaddingException ex)

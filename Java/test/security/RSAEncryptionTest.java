@@ -23,23 +23,22 @@ public class RSAEncryptionTest
         KeyPair key = RSAEncryption.generateKeyPair();
 
         //Encryption
-        byte[] encryptedMessage = RSAEncryption.encrypt(message, key.getPublic());
+        byte[] encryptedMessage = RSAEncryption.encrypt(message.getBytes(), key.getPublic());
 
         //Decryption
-        String decryptedMessage = RSAEncryption.decrypt(encryptedMessage, key.getPrivate());
+        byte[] decryptedMessage = RSAEncryption.decrypt(encryptedMessage, key.getPrivate());
 
         System.out.println("Original Message -> " + message);
         System.out.print("Encrypted Message -> "); System.out.println(new String(encryptedMessage));
-        System.out.println("Decrypted Message -> " + decryptedMessage);
+        System.out.print("Decrypted Message -> "); System.out.println(new String(decryptedMessage));
 
-        assertEquals(message, decryptedMessage);
+        assertEquals(message, new String(decryptedMessage));
 
         //Try decrypt with different key
         KeyPair differentKey = RSAEncryption.generateKeyPair();
-        String wrongKeyDecryptedMessage = "";
         try
         {
-            wrongKeyDecryptedMessage = RSAEncryption.decrypt(encryptedMessage, differentKey.getPrivate());
+            byte[] wrongKeyDecryptedMessage = RSAEncryption.decrypt(encryptedMessage, differentKey.getPrivate());
             assertNotEquals(message, wrongKeyDecryptedMessage);
         }
         catch (BadPaddingException ex)

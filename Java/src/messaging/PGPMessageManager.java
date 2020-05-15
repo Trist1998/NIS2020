@@ -7,7 +7,7 @@ import security.RSAEncryption;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.smartcardio.CommandAPDU;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,40 +16,18 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 
 public class PGPMessageManager
 {
     private PrivateKey privateKey;
     private PublicKey publicKey;
 
-    private PGPMessageManager(PublicKey publicKey, PrivateKey privateKey)
+    public PGPMessageManager(PublicKey publicKey, PrivateKey privateKey)
     {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
     }
-
-    public byte[] generatePGPMessage(String message) throws NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchPaddingException
-    {
-        //Generate session key
-        Key sessionKey = AESEncryption.generateKey();
-
-        byte[] compressedMessage = Compression.compress(message.getBytes());//TODO Compress message
-        byte[] encryptedMessage = AESEncryption.encrypt(compressedMessage, sessionKey);
-
-        byte[] messageDigest = Hashing.getDigest(message);
-
-
-
-        return new byte[11];
-
-    }
-
-    public String openPGPMessage(byte[] pgpPayload)
-    {
-
-        return "Secret Message";
-    }
-
 
     public static PGPMessageManager getServerInstance(Socket socket)
     {
@@ -91,15 +69,52 @@ public class PGPMessageManager
         return null;
     }
 
-    private byte[] encryptMessage(String message, Key key) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException
+    public byte[] generatePGPMessage(String message) throws NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchPaddingException
     {
-        return AESEncryption.encrypt(message, key);
+        //Generate session key
+        Key sessionKey = AESEncryption.generateKey();
+
+        byte[] messageDigest = Hashing.getDigest(message);
+        byte[] encryptedMessageDigest = RSAEncryption.encrypt(messageDigest, privateKey);
+
+        byte[] concat = concat(encryptedMessageDigest, message.getBytes());
+
+        byte[] compressedMessage = Compression.compress(concat);//TODO Compress message
+        byte[] encryptedMessage = AESEncryption.encrypt(compressedMessage, sessionKey);
+
+        byte[] encryptedSessionKey = RSAEncryption.encrypt(sessionKey.getEncoded(), publicKey);
+
+        System.out.println(encryptedSessionKey.length);
+
+        return concat(encryptedSessionKey, encryptedMessage);
+
     }
 
-    private String decryptMessage(String message, Key key) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException
+    public String openPGPMessage(byte[] pgpPayload) throws IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException
     {
-        return AESEncryption.decrypt(message.getBytes(), key);
+        byte[] encryptedSessionKey = Arrays.copyOfRange(pgpPayload, 0, 256);
+        byte[] encryptedCompressedMessage = Arrays.copyOfRange(pgpPayload, 256, pgpPayload.length);
+
+        byte[] decryptedSessionKey = RSAEncryption.decrypt(encryptedSessionKey, privateKey);
+        Key sessionKey = new SecretKeySpec(decryptedSessionKey, AESEncryption.ALGORITHM_STRING);
+        byte[] compressedMessage = AESEncryption.decrypt(encryptedCompressedMessage, sessionKey);
+
+        byte[] concat = Compression.decompress(compressedMessage);//TODO decompress message
+
+        byte[] encryptedMessageDigest = Arrays.copyOfRange(concat, 0, 256);
+        byte[] message = Arrays.copyOfRange(concat, 256, concat.length);
+
+        byte[] messageDigest = RSAEncryption.decrypt(encryptedMessageDigest, publicKey);
+        if(Hashing.authenticateMessage(message, messageDigest))
+        {
+            return new String(message);
+        }
+
+        return "Message not authentic: " + message;
     }
+
+
+
 
     private static void sendPublicKey(PublicKey publicKey, OutputStream outputStream) throws IOException
     {
@@ -120,5 +135,12 @@ public class PGPMessageManager
     private static byte[] receiveKeyBytes(InputStream inputStream)
     {
         return new byte[1];//TODO implement this
+    }
+
+    private byte[] concat(byte[] first, byte[] second)
+    {
+        byte[] result = Arrays.copyOf(first, first.length + second.length);
+        System.arraycopy(second, 0, result, first.length, second.length);
+        return result;
     }
 }
