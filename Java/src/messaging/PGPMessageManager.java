@@ -7,6 +7,7 @@ import security.RSAEncryption;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.smartcardio.CommandAPDU;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,14 +28,16 @@ public class PGPMessageManager
         this.privateKey = privateKey;
     }
 
-    public byte[] generatePGPMessage(String message) throws NoSuchAlgorithmException
+    public byte[] generatePGPMessage(String message) throws NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchPaddingException
     {
         //Generate session key
         Key sessionKey = AESEncryption.generateKey();
 
-        byte[] compressedMessage = message.getBytes();//TODO Compress message
+        byte[] compressedMessage = Compression.compress(message.getBytes());//TODO Compress message
+        byte[] encryptedMessage = AESEncryption.encrypt(compressedMessage, sessionKey);
 
         byte[] messageDigest = Hashing.getDigest(message);
+
 
 
         return new byte[11];
@@ -43,6 +46,7 @@ public class PGPMessageManager
 
     public String openPGPMessage(byte[] pgpPayload)
     {
+
         return "Secret Message";
     }
 
@@ -87,14 +91,12 @@ public class PGPMessageManager
         return null;
     }
 
-
-
-    private byte[] encryptMessage(String message, Key key) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException
+    private byte[] encryptMessage(String message, Key key) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException
     {
         return AESEncryption.encrypt(message, key);
     }
 
-    private String decryptMessage(String message, Key key) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException
+    private String decryptMessage(String message, Key key) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException
     {
         return AESEncryption.decrypt(message.getBytes(), key);
     }

@@ -2,13 +2,13 @@ package messaging;
 
 public class Compression
 {
-    public byte[] compress(byte[] message)
+    public static byte[] compress(byte[] message)
     {
-        return new byte[12];//TODO Compress
+        return message;//TODO Compress
     }
 
-    public byte[] decompress(byte[] message)
+    public static byte[] decompress(byte[] message)
     {
-        return new byte[12];//TODO Decompress
+        return message;//TODO Decompress
     }
 }

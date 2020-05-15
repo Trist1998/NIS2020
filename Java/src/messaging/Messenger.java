@@ -91,6 +91,5 @@ public class Messenger
                 message += line;
         }
 
-
     }
 }
