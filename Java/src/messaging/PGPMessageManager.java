@@ -74,36 +74,46 @@ public class PGPMessageManager
         //Generate session key
         Key sessionKey = AESEncryption.generateKey();
 
+        //Generate and encrypt Message Digest
         byte[] messageDigest = Hashing.getDigest(message);
         byte[] encryptedMessageDigest = RSAEncryption.encrypt(messageDigest, privateKey);
 
+        //Combine message body
         byte[] concat = concat(encryptedMessageDigest, message.getBytes());
 
+        //Compress and Encrypt Message Body
         byte[] compressedMessage = Compression.compress(concat);//TODO Compress message
         byte[] encryptedMessage = AESEncryption.encrypt(compressedMessage, sessionKey);
 
+        //Encrypt the Session Key
         byte[] encryptedSessionKey = RSAEncryption.encrypt(sessionKey.getEncoded(), publicKey);
 
-        System.out.println(encryptedSessionKey.length);
-
+        //Combine encrypted Session Key and Compressed Message Body to create PGP Payload
         return concat(encryptedSessionKey, encryptedMessage);
 
     }
 
     public String openPGPMessage(byte[] pgpPayload) throws IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException
     {
+        //Split encrypted Session Key and Compressed Message Body
         byte[] encryptedSessionKey = Arrays.copyOfRange(pgpPayload, 0, 256);
         byte[] encryptedCompressedMessage = Arrays.copyOfRange(pgpPayload, 256, pgpPayload.length);
 
+        //Decrypt Session Key
         byte[] decryptedSessionKey = RSAEncryption.decrypt(encryptedSessionKey, privateKey);
         Key sessionKey = new SecretKeySpec(decryptedSessionKey, AESEncryption.ALGORITHM_STRING);
+
+        //Decrypt Compressed Message Body
         byte[] compressedMessage = AESEncryption.decrypt(encryptedCompressedMessage, sessionKey);
 
+        //Decompress message body
         byte[] concat = Compression.decompress(compressedMessage);//TODO decompress message
 
+        //Split encrypted Message Digest and Message
         byte[] encryptedMessageDigest = Arrays.copyOfRange(concat, 0, 256);
         byte[] message = Arrays.copyOfRange(concat, 256, concat.length);
 
+        //Compare received Message Digest and generated one
         byte[] messageDigest = RSAEncryption.decrypt(encryptedMessageDigest, publicKey);
         if(Hashing.authenticateMessage(message, messageDigest))
         {
