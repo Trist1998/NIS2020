@@ -68,9 +68,7 @@ public class Messenger
 
     private void sendMessage(String message) throws IOException, NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException
     {
-        message = message.replaceAll("MESSAGE_", "MESSAGE__");
-        message += "\n" + MESSAGE_END + "\n";
-        writer.write(securityManager.encryptMessage(message));
+        writer.write(securityManager.generatePGPMessage(message));
         writer.flush();
     }
 
@@ -91,8 +89,8 @@ public class Messenger
 
             if(line.trim().equals(MESSAGE_END))
             {
-                System.out.println("Message: " + message.replaceAll("MESSAGE__", "MESSAGE_"));
-                //System.out.println(securityManager.decryptMessage(message.getBytes()).replaceAll("MESSAGE__", "MESSAGE_"));
+                //System.out.println("Message: " + message.replaceAll("MESSAGE__", "MESSAGE_"));
+                System.out.println(securityManager.openPGPMessage(message.getBytes()).replaceAll("MESSAGE__", "MESSAGE_"));
                 message = "";
             }
             else
