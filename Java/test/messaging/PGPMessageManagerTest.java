@@ -22,9 +22,11 @@ public class PGPMessageManagerTest
         PGPMessageManager personAManager = new PGPMessageManager(personBKey.getPublic(), personAKey.getPrivate());
         PGPMessageManager personBManager = new PGPMessageManager(personAKey.getPublic(), personBKey.getPrivate());
 
-        byte[] payload = personAManager.generatePGPMessage("Hello");
+        String message = "This is the secret test message";
+        byte[] payload = personAManager.generatePGPMessage(message);
 
-        System.out.println(personBManager.openPGPMessage(payload));
+        String decryptedMessage = personBManager.openPGPMessage(payload);
+        assertEquals(decryptedMessage, message);
     }
 
     @Test
