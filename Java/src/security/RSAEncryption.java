@@ -5,6 +5,8 @@ import java.security.*;
 
 public class RSAEncryption
 {
+    public static final String ALGORITHM_STRING = "RSA";
+
     public static KeyPair generateKeyPair() throws NoSuchAlgorithmException
     {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
@@ -30,4 +32,5 @@ public class RSAEncryption
         cipher.init(Cipher.DECRYPT_MODE, key);
         return new String(cipher.doFinal(cipherText));
     }
+
 }

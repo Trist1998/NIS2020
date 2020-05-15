@@ -41,6 +41,13 @@ public class AESEncryption
         return cipher.doFinal(message.getBytes());
     }
 
+    public static byte[] encrypt(String message, Key key) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException
+    {
+        Cipher cipher = getCipherInstance();
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+        return cipher.doFinal(message.getBytes());
+    }
+
     public static String decrypt(byte[] cipherText, Key key, IvParameterSpec ivSpec) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException
     {
         Cipher cipher = getCipherInstance();
@@ -48,4 +55,10 @@ public class AESEncryption
         return new String(cipher.doFinal(cipherText));
     }
 
+    public static String decrypt(byte[] cipherText, Key key) throws BadPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException
+    {
+        Cipher cipher = getCipherInstance();
+        cipher.init(Cipher.DECRYPT_MODE, key);
+        return new String(cipher.doFinal(cipherText));
+    }
 }

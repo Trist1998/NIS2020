@@ -6,10 +6,15 @@ import java.util.Arrays;
 
 public class Hashing
 {
+
     public static byte[] getDigest(String message) throws NoSuchAlgorithmException
     {
+        return getDigest(message.getBytes());
+    }
+
+    public static byte[] getDigest(byte[] messageBytes) throws NoSuchAlgorithmException
+    {
         MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-        byte[] messageBytes = message.getBytes();
         byte[] output = messageDigest.digest(messageBytes);
         return output;
     }
