@@ -13,7 +13,6 @@ import static org.junit.Assert.*;
 
 public class AESEncryptionTest
 {
-
     @Test
     public void encrypt() throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException
     {
