@@ -25,13 +25,18 @@ public class PGPMessageManager
         this.privateKey = privateKey;
     }
 
+    /**
+     * Sets up PGPMessageManager for the server
+     * @param socket
+     * @return
+     */
     public static PGPMessageManager getServerInstance(Socket socket)
     {
         try
         {
             KeyPair pair = RSAEncryption.generateKeyPair();
 
-            //This key exchange should be done with Certificate Authority
+            //This key exchange should be done with Certificate Authority but is like this for testing purposes
             sendPublicKey(pair.getPublic(), socket.getOutputStream());
             PublicKey receivedPublicKey = receivePublicKey(socket.getInputStream());
 
@@ -45,13 +50,18 @@ public class PGPMessageManager
         return null;
     }
 
+    /**
+     * Sets up PGPMessageManager for the client
+     * @param socket
+     * @return
+     */
     public static PGPMessageManager getClientInstance(Socket socket)
     {
         try
         {
             KeyPair pair = RSAEncryption.generateKeyPair();
 
-            //This key exchange should be done with Certificate Authority
+            //This key exchange should be done with Certificate Authority but is like this for testing purposes
             PublicKey receivedPublicKey = receivePublicKey(socket.getInputStream());
             sendPublicKey(pair.getPublic(), socket.getOutputStream());
 
@@ -65,6 +75,16 @@ public class PGPMessageManager
         return null;
     }
 
+    /**
+     * Generates PGP messages to be sent
+     * @param message
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws IllegalBlockSizeException
+     * @throws InvalidKeyException
+     * @throws BadPaddingException
+     * @throws NoSuchPaddingException
+     */
     public byte[] generatePGPMessage(String message) throws NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchPaddingException
     {
         //Generate session key
@@ -78,7 +98,7 @@ public class PGPMessageManager
         byte[] concat = concat(encryptedMessageDigest, message.getBytes());
 
         //Compress and Encrypt Message Body
-        byte[] compressedMessage = Compression.compress(concat);//TODO Compress message
+        byte[] compressedMessage = Compression.compress(concat);
         byte[] encryptedMessage = AESEncryption.encrypt(compressedMessage, sessionKey);
 
         //Encrypt the Session Key
@@ -89,6 +109,16 @@ public class PGPMessageManager
 
     }
 
+    /**
+     * Decrypts and authenticates received PGP messages
+     * @param pgpPayload
+     * @return
+     * @throws IllegalBlockSizeException
+     * @throws InvalidKeyException
+     * @throws BadPaddingException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchPaddingException
+     */
     public String openPGPMessage(byte[] pgpPayload) throws IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException
     {
         //Split encrypted Session Key and Compressed Message Body
@@ -103,7 +133,7 @@ public class PGPMessageManager
         byte[] compressedMessage = AESEncryption.decrypt(encryptedCompressedMessage, sessionKey);
 
         //Decompress message body
-        byte[] concat = Compression.decompress(compressedMessage);//TODO decompress message
+        byte[] concat = Compression.decompress(compressedMessage);
 
         //Split encrypted Message Digest and Message
         byte[] encryptedMessageDigest = Arrays.copyOfRange(concat, 0, 256);
@@ -111,7 +141,7 @@ public class PGPMessageManager
 
         //Compare received Message Digest and generated one
         byte[] messageDigest = RSAEncryption.decrypt(encryptedMessageDigest, publicKey);
-        if(Hashing.authenticateMessage(message, messageDigest))
+        if (Hashing.authenticateMessage(message, messageDigest))
         {
             return new String(message);
         }
@@ -119,9 +149,16 @@ public class PGPMessageManager
         return "Message not authentic: " + message;
     }
 
+    private byte[] concat(byte[] first, byte[] second)
+    {
+        byte[] result = Arrays.copyOf(first, first.length + second.length);
+        System.arraycopy(second, 0, result, first.length, second.length);
+        return result;
+    }
 
-
-
+    /*
+     * Not sure if we will end up using these functions but ill keep them here in case
+     */
     private static void sendPublicKey(PublicKey publicKey, OutputStream outputStream) throws IOException
     {
         outputStream.write(publicKey.getEncoded());
@@ -141,12 +178,5 @@ public class PGPMessageManager
     private static byte[] receiveKeyBytes(InputStream inputStream)
     {
         return new byte[1];//TODO implement this
-    }
-
-    private byte[] concat(byte[] first, byte[] second)
-    {
-        byte[] result = Arrays.copyOf(first, first.length + second.length);
-        System.arraycopy(second, 0, result, first.length, second.length);
-        return result;
     }
 }
