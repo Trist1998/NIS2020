@@ -16,6 +16,7 @@ public class GenCertificates
 {
     public static void createCertificates() throws Exception
     {
+        //Generate the CA certificate
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         keyPairGenerator.initialize(2048);
         KeyPair CAKeyPair = keyPairGenerator.generateKeyPair();
@@ -27,6 +28,7 @@ public class GenCertificates
         fos.write(CAKeyPair.getPrivate().getEncoded());
         fos.close();
 
+        //Generate the client certificate, which is signed by the CA
         KeyPair clientKeyPair = keyPairGenerator.generateKeyPair();
         X509Certificate clientCert = createCertificate("CN=Client", "CN=NIS_CA", clientKeyPair.getPublic(), CAKeyPair.getPrivate(), CAKeyPair.getPublic());
         fos = new FileOutputStream("Client.cer");
@@ -36,6 +38,7 @@ public class GenCertificates
         fos.write(clientKeyPair.getPrivate().getEncoded());
         fos.close();
 
+        //Generate the server certificate, which is signed by the CA
         KeyPair serverKeyPair = keyPairGenerator.generateKeyPair();
         X509Certificate serverCert = createCertificate("CN=Server", "CN=NIS_CA", serverKeyPair.getPublic(), CAKeyPair.getPrivate(), CAKeyPair.getPublic());
         fos = new FileOutputStream("Server.cer");

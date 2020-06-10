@@ -34,19 +34,17 @@ public class PGPMessageManager
     {
         try
         {
+            //Read in the CA certificate
             byte[] fileContent = Files.readAllBytes(Paths.get("NIS_CA.cer"));
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
             InputStream in = new ByteArrayInputStream(fileContent);
             X509Certificate CA = (X509Certificate)certFactory.generateCertificate(in);
 
-            fileContent = Files.readAllBytes(Paths.get("Server.cer"));
-            certFactory = CertificateFactory.getInstance("X.509");
-            in = new ByteArrayInputStream(fileContent);
-            X509Certificate serverCert = (X509Certificate)certFactory.generateCertificate(in);
-
+            //Read in the server private key
             fileContent = Files.readAllBytes(Paths.get("Server.pri"));
             PrivateKey privateKey = RSAEncryption.decodePrivateKey(fileContent);
 
+            //Obtain the client certificate from the socket stream and verify it
             in = new ByteArrayInputStream(receiveKeyBytes(socket.getInputStream()));
             X509Certificate clientCert = (X509Certificate)certFactory.generateCertificate(in);
             System.out.println("Received client certificate");
@@ -54,6 +52,11 @@ public class PGPMessageManager
             clientCert.verify(CA.getPublicKey());
             System.out.println("Client certificate has been verified");
 
+            //Read in and send the server certificate to the client
+            fileContent = Files.readAllBytes(Paths.get("Server.cer"));
+            certFactory = CertificateFactory.getInstance("X.509");
+            in = new ByteArrayInputStream(fileContent);
+            X509Certificate serverCert = (X509Certificate)certFactory.generateCertificate(in);
             sendCertificate(serverCert, socket.getOutputStream());
 
             return new PGPMessageManager(clientCert.getPublicKey(), privateKey);
@@ -75,21 +78,24 @@ public class PGPMessageManager
     {
         try
         {
+            //Read in and send the client certificate to the server
             byte[] fileContent = Files.readAllBytes(Paths.get("Client.cer"));
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
             InputStream in = new ByteArrayInputStream(fileContent);
             X509Certificate clientCert = (X509Certificate)certFactory.generateCertificate(in);
-
             sendCertificate(clientCert, socket.getOutputStream());
 
+            //Read in the CA certificate
             fileContent = Files.readAllBytes(Paths.get("NIS_CA.cer"));
             certFactory = CertificateFactory.getInstance("X.509");
             in = new ByteArrayInputStream(fileContent);
             X509Certificate CA = (X509Certificate)certFactory.generateCertificate(in);
 
+            //Read in the client private key
             fileContent = Files.readAllBytes(Paths.get("Client.pri"));
             PrivateKey privateKey = RSAEncryption.decodePrivateKey(fileContent);
 
+            //Obtain the server certificate from the socket stream and verify it
             in = new ByteArrayInputStream(receiveKeyBytes(socket.getInputStream()));
             X509Certificate serverCert = (X509Certificate)certFactory.generateCertificate(in);
             System.out.println("Received server certificate");
