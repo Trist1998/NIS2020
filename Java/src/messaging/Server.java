@@ -2,6 +2,7 @@ package messaging;
 
 import security.PGPMessageManager;
 
+import java.io.IOException;
 import java.net.*;
 
 
@@ -12,11 +13,24 @@ import java.net.*;
  */
 public class Server
 {
-    public static final int SERVER_PORT = 9999;
+    public static final int SERVER_PORT = 12123;
 
-    public static void main(String[] args)
+    private Socket socket;
+    private Messenger messenger;
+    private PGPMessageManager manager;
+
+    public Server(int portNumber) throws IOException
     {
-        openSocketServer(9999);
+        socket = openSocketServer(portNumber);
+        manager = PGPMessageManager.getServerInstance(socket);
+        messenger = new Messenger(socket, manager);
+    }
+
+    public static void main(String[] args) throws IOException
+    {
+        Server server = new Server(SERVER_PORT);
+        server.getMessenger().run();
+        server.close();
     }
 
     /**
@@ -25,7 +39,7 @@ public class Server
      *
      * @param portNumber
      */
-    public static void openSocketServer(int portNumber)
+    public static Socket openSocketServer(int portNumber)
     {
         try
         {
@@ -33,16 +47,27 @@ public class Server
             myService = new ServerSocket(portNumber); // Port number must be > 1023
             System.out.println("Waiting for connection");
             Socket myServer = myService.accept();
-            System.out.println("Connection made. Performing Key Exchange...");
-            PGPMessageManager manager = PGPMessageManager.getServerInstance(myServer);
-            System.out.println("Key exchange successful. You can start messaging:");
-            Messenger messenger = new Messenger(myServer, manager);
-            myService.close();
-            messenger.run();
+            System.out.println("Connection made");
+            return myServer;
         }
         catch (Exception e)
         {
             e.printStackTrace();
         }
+        return null;
+    }
+
+    public Messenger getMessenger()
+    {
+        return messenger;
+    }
+
+    public PGPMessageManager getManager()
+    {
+        return manager;
+    }
+    public void close() throws IOException
+    {
+        socket.close();
     }
 }

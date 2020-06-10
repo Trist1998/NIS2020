@@ -26,7 +26,12 @@ public class PGPMessageManagerTest
         String message = "This is the secret test message";
         byte[] payload = personAManager.generatePGPMessage(message);
 
+        //Confirms message is encrypted
+        assertFalse(new String(payload).contains(message));
+
         String decryptedMessage = personBManager.openPGPMessage(payload);
+
+        //Confirms the message can be decrypted
         assertEquals(decryptedMessage, message);
     }
 

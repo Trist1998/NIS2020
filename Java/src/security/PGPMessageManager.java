@@ -36,10 +36,11 @@ public class PGPMessageManager
         {
             KeyPair pair = RSAEncryption.generateKeyPair();
 
+            System.out.println("Exchanging Keys");
             //This key exchange should be done with Certificate Authority but is like this for testing purposes
             sendPublicKey(pair.getPublic(), socket.getOutputStream());
             PublicKey receivedPublicKey = receivePublicKey(socket.getInputStream());
-
+            System.out.println("Key exchange successful");
             return new PGPMessageManager(receivedPublicKey, pair.getPrivate());
         }
         catch (Exception e)

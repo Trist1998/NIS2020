@@ -20,8 +20,10 @@ public class Client
         {
             System.out.println("Waiting for connection");
             Socket myClient = new Socket(HOST_NAME, portNumber);
+
             System.out.println("Connection made. Performing Key Exchange...");
             PGPMessageManager manager = PGPMessageManager.getClientInstance(myClient);
+
             System.out.println("Key exchange successful. You can start messaging:");
             Messenger messenger = new Messenger(myClient, manager);
             messenger.run();

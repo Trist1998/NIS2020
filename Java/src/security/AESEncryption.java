@@ -1,7 +1,5 @@
 package security;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import java.security.*;
@@ -11,9 +9,7 @@ public class AESEncryption
     public static final String ALGORITHM_STRING = "AES";
 
     public AESEncryption()
-    {
-        Security.addProvider(new BouncyCastleProvider());
-    }
+    {}
 
     private static Cipher getCipherInstance() throws NoSuchPaddingException, NoSuchAlgorithmException
     {

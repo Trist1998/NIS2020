@@ -2,8 +2,12 @@ package messaging;
 
 import security.PGPMessageManager;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.net.Socket;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
 
@@ -77,7 +81,23 @@ public class Messenger
         writer.flush();
     }
 
-    private void receiveMessage()
+    public void receiveMessage()
+    {
+        for(;;)
+        {
+            try
+            {
+                System.out.println(securityManager.openPGPMessage(processInputStream()));
+            }
+            catch (Exception e)
+            {
+
+            }
+        }
+
+    }
+
+    public byte[] processInputStream()
     {
         String message = "";
         for(;;)
@@ -94,20 +114,16 @@ public class Messenger
 
             if(line.trim().equals(MESSAGE_END))
             {
-                try
-                {
-                    System.out.println(securityManager.openPGPMessage(message.getBytes()));
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-
-                message = "";
+                return message.getBytes();
             }
             else
                 message += line;
         }
 
+    }
+
+    public PGPMessageManager getSecurityManager()
+    {
+        return securityManager;
     }
 }
