@@ -9,6 +9,9 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.*;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
 public class PGPMessageManager
@@ -31,11 +34,29 @@ public class PGPMessageManager
     {
         try
         {
-            byte[] fileContent = Files.readAllBytes(Paths.get("sprk.key"));
+            byte[] fileContent = Files.readAllBytes(Paths.get("NIS_CA.cer"));
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            InputStream in = new ByteArrayInputStream(fileContent);
+            X509Certificate CA = (X509Certificate)certFactory.generateCertificate(in);
+
+            fileContent = Files.readAllBytes(Paths.get("Server.cer"));
+            certFactory = CertificateFactory.getInstance("X.509");
+            in = new ByteArrayInputStream(fileContent);
+            X509Certificate serverCert = (X509Certificate)certFactory.generateCertificate(in);
+
+            fileContent = Files.readAllBytes(Paths.get("Server.pri"));
             PrivateKey privateKey = RSAEncryption.decodePrivateKey(fileContent);
-            PublicKey receivedPublicKey = RSAEncryption.decodePublicKey(receiveKeyBytes(socket.getInputStream()));
-            System.out.println("Key exchange successful");
-            return new PGPMessageManager(receivedPublicKey, privateKey);
+
+            in = new ByteArrayInputStream(receiveKeyBytes(socket.getInputStream()));
+            X509Certificate clientCert = (X509Certificate)certFactory.generateCertificate(in);
+            System.out.println("Received client certificate");
+            clientCert.checkValidity();
+            clientCert.verify(CA.getPublicKey());
+            System.out.println("Client certificate has been verified");
+
+            sendCertificate(serverCert, socket.getOutputStream());
+
+            return new PGPMessageManager(clientCert.getPublicKey(), privateKey);
         }
         catch (Exception e)
         {
@@ -54,11 +75,29 @@ public class PGPMessageManager
     {
         try
         {
-            KeyPair pair = RSAEncryption.generateKeyPair();
-            byte[] fileContent = Files.readAllBytes(Paths.get("spbk.key"));
-            PublicKey serverPublicKey = RSAEncryption.decodePublicKey(fileContent);
-            sendPublicKey(pair.getPublic(), socket.getOutputStream());
-            return new PGPMessageManager(serverPublicKey, pair.getPrivate());
+            byte[] fileContent = Files.readAllBytes(Paths.get("Client.cer"));
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            InputStream in = new ByteArrayInputStream(fileContent);
+            X509Certificate clientCert = (X509Certificate)certFactory.generateCertificate(in);
+
+            sendCertificate(clientCert, socket.getOutputStream());
+
+            fileContent = Files.readAllBytes(Paths.get("NIS_CA.cer"));
+            certFactory = CertificateFactory.getInstance("X.509");
+            in = new ByteArrayInputStream(fileContent);
+            X509Certificate CA = (X509Certificate)certFactory.generateCertificate(in);
+
+            fileContent = Files.readAllBytes(Paths.get("Client.pri"));
+            PrivateKey privateKey = RSAEncryption.decodePrivateKey(fileContent);
+
+            in = new ByteArrayInputStream(receiveKeyBytes(socket.getInputStream()));
+            X509Certificate serverCert = (X509Certificate)certFactory.generateCertificate(in);
+            System.out.println("Received server certificate");
+            serverCert.checkValidity();
+            serverCert.verify(CA.getPublicKey());
+            System.out.println("Server certificate has been verified");
+
+            return new PGPMessageManager(serverCert.getPublicKey(), privateKey);
         }
         catch (Exception e)
         {
@@ -156,6 +195,11 @@ public class PGPMessageManager
     private static void sendPublicKey(PublicKey publicKey, OutputStream outputStream) throws IOException
     {
         outputStream.write(publicKey.getEncoded());
+        outputStream.flush();
+    }
+
+    private static void sendCertificate(X509Certificate certificate, OutputStream outputStream) throws IOException, CertificateEncodingException {
+        outputStream.write(certificate.getEncoded());
         outputStream.flush();
     }
 
