@@ -68,6 +68,15 @@ public class RSAEncryptionTest
         }
         catch (BadPaddingException ex)
         {}
+
+        //Try decrypt with public key
+        try
+        {
+            byte[] wrongKeyDecryptedMessage = RSAEncryption.decrypt(encryptedMessage, key.getPublic());
+            assertNotEquals(message, wrongKeyDecryptedMessage);
+        }
+        catch (BadPaddingException ex)
+        {}
     }
 
     /* RSA Encryption Test output
@@ -77,4 +86,44 @@ public class RSAEncryptionTest
                                  M�C#
             Decrypted Message -> This is the secret test message
      */
+
+    @Test
+    public void encryptPrivate() throws NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchPaddingException
+    {
+        String message = "This is the secret test message";
+
+        KeyPair key = RSAEncryption.generateKeyPair();
+
+        //Encryption
+        byte[] encryptedMessage = RSAEncryption.encrypt(message.getBytes(), key.getPrivate());
+
+        //Decryption
+        byte[] decryptedMessage = RSAEncryption.decrypt(encryptedMessage, key.getPublic());
+
+        System.out.println("Original Message -> " + message);
+        System.out.print("Encrypted Message -> "); System.out.println(new String(encryptedMessage));
+        System.out.print("Decrypted Message -> "); System.out.println(new String(decryptedMessage));
+
+        assertEquals(message, new String(decryptedMessage));
+
+        //Try decrypt with different key
+        KeyPair differentKey = RSAEncryption.generateKeyPair();
+        try
+        {
+            byte[] wrongKeyDecryptedMessage = RSAEncryption.decrypt(encryptedMessage, differentKey.getPublic());
+            assertNotEquals(message, wrongKeyDecryptedMessage);
+        }
+        catch (BadPaddingException ex)
+        {}
+
+        //Try decrypt with private key
+        try
+        {
+            byte[] wrongKeyDecryptedMessage = RSAEncryption.decrypt(encryptedMessage, key.getPrivate());
+            assertNotEquals(message, wrongKeyDecryptedMessage);
+        }
+        catch (BadPaddingException ex)
+        {}
+
+    }
 }
