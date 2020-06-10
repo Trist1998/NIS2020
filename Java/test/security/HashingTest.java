@@ -23,5 +23,15 @@ public class HashingTest
 
         String typoWrongMessage = "Test nessage for the hashing function";
         assertFalse(Hashing.authenticateMessage(typoWrongMessage, digest));
+
+        System.out.println("Message-> " + message);
+        System.out.println("Message Hash-> "+ Hashing.getDigest(message));
     }
+
+    /* Hashing test ouput:
+
+        Message-> Test message for the hashing function
+        Message Hash-> [B@15327b79
+
+     */
 }

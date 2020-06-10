@@ -1,39 +1,31 @@
 package messaging;
 
 import security.PGPMessageManager;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.io.*;
 import java.net.Socket;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.nio.ByteBuffer;
 import java.util.Scanner;
 
 public class Messenger
 {
-    private static String MESSAGE_END = "MESSAGE_END";
     private Socket socket;
-    private BufferedReader reader;
     private OutputStream writer;
     private PGPMessageManager securityManager;
 
     public Messenger(Socket socket, PGPMessageManager securityManager) throws IOException
     {
         this.socket = socket;
-        this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.writer = socket.getOutputStream();
         this.securityManager = securityManager;
     }
 
-    public void run() throws IOException
+    public void run()
     {
         startReceiveThread();
         startSendThread();
     }
 
-    private void startSendThread() throws IOException
+    private void startSendThread()
     {
         boolean loop = true;
         while(loop)
@@ -67,59 +59,47 @@ public class Messenger
         }).start();
     }
 
-    private void sendMessage(String message) throws IOException, NoSuchAlgorithmException
+    private void sendMessage(String message)
     {
         try
         {
-            writer.write(securityManager.generatePGPMessage(message));
+            byte[] payload = securityManager.generatePGPMessage(message);
+            byte[] length = ByteBuffer.allocate(4).putInt(payload.length).array();
+            writer.write(length);
+            writer.write(payload);
+            writer.flush();
         }
         catch (Exception e)
         {
             e.printStackTrace();
+            System.out.println("Error Sending");
         }
-
-        writer.flush();
     }
 
     public void receiveMessage()
     {
-        for(;;)
+        while(true)
         {
             try
             {
-                System.out.println(securityManager.openPGPMessage(processInputStream()));
+                System.out.println("Them: "+securityManager.openPGPMessage(processInputStream()));
             }
             catch (Exception e)
             {
-
+                System.out.println("Receive message error");
             }
         }
 
     }
 
-    public byte[] processInputStream()
+    public byte[] processInputStream() throws IOException
     {
-        String message = "";
-        for(;;)
-        {
-            String line = null;
-            try
-            {
-                line = reader.readLine();
-            }
-            catch (Exception ex)
-            {
-                ex.printStackTrace();
-            }
-
-            if(line.trim().equals(MESSAGE_END))
-            {
-                return message.getBytes();
-            }
-            else
-                message += line;
-        }
-
+        byte[] lengthArray = new byte[4];
+        socket.getInputStream().read(lengthArray, 0, 4);
+        int length = ByteBuffer.wrap(lengthArray).getInt();
+        byte[] data = new byte[length];
+        socket.getInputStream().read(data, 0, data.length);
+        return data;
     }
 
     public PGPMessageManager getSecurityManager()

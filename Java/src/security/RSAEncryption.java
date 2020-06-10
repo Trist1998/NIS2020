@@ -1,7 +1,11 @@
 package security;
 
 import javax.crypto.*;
+import java.io.IOException;
 import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 public class RSAEncryption
 {
@@ -9,8 +13,7 @@ public class RSAEncryption
 
     public static KeyPair generateKeyPair() throws NoSuchAlgorithmException
     {
-        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-        generator.initialize(1024);
+        KeyPairGenerator generator = KeyPairGenerator.getInstance(RSAEncryption.ALGORITHM_STRING);
         return generator.generateKeyPair();
     }
 
@@ -45,6 +48,16 @@ public class RSAEncryption
         Cipher cipher = getCipherInstance();
         cipher.init(Cipher.DECRYPT_MODE, key);
         return cipher.doFinal(cipherText);
+    }
+
+    public static PrivateKey decodePrivateKey(byte[] data) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException
+    {
+        return KeyFactory.getInstance(RSAEncryption.ALGORITHM_STRING).generatePrivate(new PKCS8EncodedKeySpec(data));
+    }
+
+    public static PublicKey decodePublicKey(byte[] data) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException
+    {
+        return KeyFactory.getInstance(RSAEncryption.ALGORITHM_STRING).generatePublic(new X509EncodedKeySpec(data));
     }
 
 }

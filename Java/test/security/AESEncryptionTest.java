@@ -41,10 +41,13 @@ public class AESEncryptionTest
             assertNotEquals(message, wrongKeyDecryptedMessage);
         }
         catch (BadPaddingException ex)
-        {
-            System.out.println("Bad Padding caused by incorrect key");
-        }
-
+        {}
     }
+    /* Encryption Test Output:
 
+        Original Message -> This is the secret test message
+        Encrypted Message -> 2�܂���m���<c%��E�lnBo�|�O�[�
+        Decrypted Message -> This is the secret test message
+
+     */
 }

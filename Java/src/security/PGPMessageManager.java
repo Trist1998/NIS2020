@@ -4,14 +4,11 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.*;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 
 public class PGPMessageManager
@@ -34,14 +31,11 @@ public class PGPMessageManager
     {
         try
         {
-            KeyPair pair = RSAEncryption.generateKeyPair();
-
-            System.out.println("Exchanging Keys");
-            //This key exchange should be done with Certificate Authority but is like this for testing purposes
-            sendPublicKey(pair.getPublic(), socket.getOutputStream());
-            PublicKey receivedPublicKey = receivePublicKey(socket.getInputStream());
+            byte[] fileContent = Files.readAllBytes(Paths.get("sprk.key"));
+            PrivateKey privateKey = RSAEncryption.decodePrivateKey(fileContent);
+            PublicKey receivedPublicKey = RSAEncryption.decodePublicKey(receiveKeyBytes(socket.getInputStream()));
             System.out.println("Key exchange successful");
-            return new PGPMessageManager(receivedPublicKey, pair.getPrivate());
+            return new PGPMessageManager(receivedPublicKey, privateKey);
         }
         catch (Exception e)
         {
@@ -61,12 +55,10 @@ public class PGPMessageManager
         try
         {
             KeyPair pair = RSAEncryption.generateKeyPair();
-
-            //This key exchange should be done with Certificate Authority but is like this for testing purposes
-            PublicKey receivedPublicKey = receivePublicKey(socket.getInputStream());
+            byte[] fileContent = Files.readAllBytes(Paths.get("spbk.key"));
+            PublicKey serverPublicKey = RSAEncryption.decodePublicKey(fileContent);
             sendPublicKey(pair.getPublic(), socket.getOutputStream());
-
-            return new PGPMessageManager(receivedPublicKey, pair.getPrivate());
+            return new PGPMessageManager(serverPublicKey, pair.getPrivate());
         }
         catch (Exception e)
         {
@@ -103,7 +95,8 @@ public class PGPMessageManager
         byte[] encryptedMessage = AESEncryption.encrypt(compressedMessage, sessionKey);
 
         //Encrypt the Session Key
-        byte[] encryptedSessionKey = RSAEncryption.encrypt(sessionKey.getEncoded(), publicKey);
+        byte[] sessionKeyArray = sessionKey.getEncoded();
+        byte[] encryptedSessionKey = RSAEncryption.encrypt(sessionKeyArray, publicKey);
 
         //Combine encrypted Session Key and Compressed Message Body to create PGP Payload
         return concat(encryptedSessionKey, encryptedMessage);
@@ -166,18 +159,10 @@ public class PGPMessageManager
         outputStream.flush();
     }
 
-    private static PrivateKey decodePrivateKey(InputStream inputStream) throws NoSuchAlgorithmException, InvalidKeySpecException
+    private static byte[] receiveKeyBytes(InputStream reader) throws IOException
     {
-        return KeyFactory.getInstance(RSAEncryption.ALGORITHM_STRING).generatePrivate(new PKCS8EncodedKeySpec(receiveKeyBytes(inputStream)));
-    }
-
-    private static PublicKey receivePublicKey(InputStream inputStream) throws NoSuchAlgorithmException, InvalidKeySpecException
-    {
-        return KeyFactory.getInstance(RSAEncryption.ALGORITHM_STRING).generatePublic(new X509EncodedKeySpec(receiveKeyBytes(inputStream)));
-    }
-
-    private static byte[] receiveKeyBytes(InputStream inputStream)
-    {
-        return new byte[1];//TODO implement this
+        byte[] data = new byte[2048];
+        int nRead = reader.read(data, 0, data.length);
+        return Arrays.copyOfRange(data, 0, nRead);
     }
 }

@@ -5,15 +5,40 @@ import org.junit.Test;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
 
 import static org.junit.Assert.*;
 
 
 public class RSAEncryptionTest
 {
+
+    @Test()
+    public void testReadCertFromFile() throws IOException, InvalidKeySpecException, NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchPaddingException
+    {
+        byte[] fileContent = Files.readAllBytes(Paths.get("C:\\Users\\trist\\IdeaProjects\\NIS2020\\spbk.key"));
+        PublicKey publicKey = RSAEncryption.decodePublicKey(fileContent);
+        fileContent = Files.readAllBytes(Paths.get("C:\\Users\\trist\\IdeaProjects\\NIS2020\\sprk.key"));
+        PrivateKey privateKey = RSAEncryption.decodePrivateKey(fileContent);
+
+        String message = "This is the secret test message";
+
+        //Encryption
+        byte[] encryptedMessage = RSAEncryption.encrypt(message.getBytes(), publicKey);
+
+        //Decryption
+        byte[] decryptedMessage = RSAEncryption.decrypt(encryptedMessage, privateKey);
+
+        System.out.println("Original Message -> " + message);
+        System.out.print("Encrypted Message -> "); System.out.println(new String(encryptedMessage));
+        System.out.print("Decrypted Message -> "); System.out.println(new String(decryptedMessage));
+
+        assertEquals(message, new String(decryptedMessage));
+    }
 
     @Test
     public void encrypt() throws NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchPaddingException
@@ -42,8 +67,14 @@ public class RSAEncryptionTest
             assertNotEquals(message, wrongKeyDecryptedMessage);
         }
         catch (BadPaddingException ex)
-        {
-            System.out.println("Bad Padding caused by incorrect key");
-        }
+        {}
     }
+
+    /* RSA Encryption Test output
+
+            Original Message -> This is the secret test message
+            Encrypted Message -> �EUG�%(r���*��$�Īj4��m�s�lY�g�v�=�b*��:� ����)�{���*R�wm�F�uI,�W��_f��1�Ȯ.�ca������z�֚r/��-�R*`p���GI�
+                                 M�C#
+            Decrypted Message -> This is the secret test message
+     */
 }

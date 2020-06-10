@@ -26,11 +26,18 @@ public class Server
         messenger = new Messenger(socket, manager);
     }
 
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args)
     {
-        Server server = new Server(SERVER_PORT);
+        Server server = null;
+        try
+        {
+            server = new Server(SERVER_PORT);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
         server.getMessenger().run();
-        server.close();
     }
 
     /**
@@ -66,6 +73,7 @@ public class Server
     {
         return manager;
     }
+
     public void close() throws IOException
     {
         socket.close();
