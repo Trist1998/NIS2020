@@ -60,9 +60,9 @@ public class PGPMessageManager
             sendCertificate(serverCert, socket.getOutputStream());
 
             System.out.println("\nServer Private Key: ");
-            System.out.println(clientCert.getPublicKey().getEncoded());
+            System.out.println(new String(clientCert.getPublicKey().getEncoded()));
             System.out.println("\nClient Public Key: ");
-            System.out.println(clientCert.getPublicKey().getEncoded());
+            System.out.println(new String(clientCert.getPublicKey().getEncoded()));
 
 
             return new PGPMessageManager(clientCert.getPublicKey(), privateKey);
@@ -108,6 +108,11 @@ public class PGPMessageManager
             serverCert.checkValidity();
             serverCert.verify(CA.getPublicKey());
             System.out.println("Server certificate has been verified");
+
+            System.out.println("\nClient Private Key: ");
+            System.out.println(new String(privateKey.getEncoded()));
+            System.out.println("\nServer Public Key: ");
+            System.out.println(new String(serverCert.getPublicKey().getEncoded()));
 
             return new PGPMessageManager(serverCert.getPublicKey(), privateKey);
         }
