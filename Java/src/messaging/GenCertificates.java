@@ -5,46 +5,50 @@ import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.bouncycastle.x509.extension.AuthorityKeyIdentifierStructure;
+import security.RSAEncryption;
 
 import java.io.FileOutputStream;
 import java.math.BigInteger;
-import java.security.*;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 
 public class GenCertificates
 {
-    public static void createCertificates() throws Exception
+    public static void createCertificates(String root, String one, String two) throws Exception
     {
         //Generate the CA certificate
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048);
-        KeyPair CAKeyPair = keyPairGenerator.generateKeyPair();
-        X509Certificate CA = createCertificate("CN=NIS_CA", "CN=NIS_CA", CAKeyPair.getPublic(), CAKeyPair.getPrivate());
-        FileOutputStream fos = new FileOutputStream("NIS_CA.cer");
+        //KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        //keyPairGenerator.initialize(2048);
+        KeyPair CAKeyPair = RSAEncryption.generateKeyPair(); //keyPairGenerator.generateKeyPair();
+        X509Certificate CA = createCertificate("CN="+root, "CN="+root, CAKeyPair.getPublic(), CAKeyPair.getPrivate());
+        FileOutputStream fos = new FileOutputStream(root+".cer");
         fos.write(CA.getEncoded());
         fos.close();
-        fos = new FileOutputStream("NIS_CA.pri");
+        fos = new FileOutputStream(root+".pri");
         fos.write(CAKeyPair.getPrivate().getEncoded());
         fos.close();
 
         //Generate the client certificate, which is signed by the CA
-        KeyPair clientKeyPair = keyPairGenerator.generateKeyPair();
-        X509Certificate clientCert = createCertificate("CN=Client", "CN=NIS_CA", clientKeyPair.getPublic(), CAKeyPair.getPrivate(), CAKeyPair.getPublic());
-        fos = new FileOutputStream("Client.cer");
+        KeyPair clientKeyPair = RSAEncryption.generateKeyPair(); //keyPairGenerator.generateKeyPair();
+        X509Certificate clientCert = createCertificate("CN="+one, "CN="+root, clientKeyPair.getPublic(), CAKeyPair.getPrivate(), CAKeyPair.getPublic());
+        fos = new FileOutputStream(one+".cer");
         fos.write(clientCert.getEncoded());
         fos.close();
-        fos = new FileOutputStream("Client.pri");
+        fos = new FileOutputStream(one+".pri");
         fos.write(clientKeyPair.getPrivate().getEncoded());
         fos.close();
 
         //Generate the server certificate, which is signed by the CA
-        KeyPair serverKeyPair = keyPairGenerator.generateKeyPair();
-        X509Certificate serverCert = createCertificate("CN=Server", "CN=NIS_CA", serverKeyPair.getPublic(), CAKeyPair.getPrivate(), CAKeyPair.getPublic());
-        fos = new FileOutputStream("Server.cer");
+        KeyPair serverKeyPair = RSAEncryption.generateKeyPair(); //keyPairGenerator.generateKeyPair();
+        X509Certificate serverCert = createCertificate("CN="+two, "CN="+root, serverKeyPair.getPublic(), CAKeyPair.getPrivate(), CAKeyPair.getPublic());
+        fos = new FileOutputStream(two+".cer");
         fos.write(serverCert.getEncoded());
         fos.close();
-        fos = new FileOutputStream("Server.pri");
+        fos = new FileOutputStream(two+".pri");
         fos.write(serverKeyPair.getPrivate().getEncoded());
         fos.close();
     }
@@ -88,6 +92,6 @@ public class GenCertificates
         writer.close();*/
 
         Security.addProvider(new BouncyCastleProvider());
-        createCertificates();
+        createCertificates("NIS_CA","Client","Server");
     }
 }
