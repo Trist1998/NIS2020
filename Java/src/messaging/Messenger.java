@@ -64,6 +64,8 @@ public class Messenger
         try
         {
             byte[] payload = securityManager.generatePGPMessage(message);
+            System.out.println("DEBUG PGP Message: ");
+            System.out.println(new String(payload));
             byte[] length = ByteBuffer.allocate(4).putInt(payload.length).array();
             writer.write(length);
             writer.write(payload);
@@ -83,6 +85,11 @@ public class Messenger
             try
             {
                 System.out.println("Them: "+securityManager.openPGPMessage(processInputStream()));
+            }
+            catch (IOException e)
+            {
+                System.out.println("Connection Closed");
+                break;
             }
             catch (Exception e)
             {

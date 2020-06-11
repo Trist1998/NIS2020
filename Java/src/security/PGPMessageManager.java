@@ -59,6 +59,12 @@ public class PGPMessageManager
             X509Certificate serverCert = (X509Certificate)certFactory.generateCertificate(in);
             sendCertificate(serverCert, socket.getOutputStream());
 
+            System.out.println("\nServer Private Key: ");
+            System.out.println(clientCert.getPublicKey().getEncoded());
+            System.out.println("\nClient Public Key: ");
+            System.out.println(clientCert.getPublicKey().getEncoded());
+
+
             return new PGPMessageManager(clientCert.getPublicKey(), privateKey);
         }
         catch (Exception e)

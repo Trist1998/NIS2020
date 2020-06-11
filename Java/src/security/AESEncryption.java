@@ -13,7 +13,7 @@ public class AESEncryption
 
     private static Cipher getCipherInstance() throws NoSuchPaddingException, NoSuchAlgorithmException
     {
-        return Cipher.getInstance("AES/ECB/PKCS5Padding");//TODO change to AES/CBC/PKCS5Padding
+        return Cipher.getInstance("AES/ECB/PKCS5Padding");
     }
 
     public static Key generateKey() throws NoSuchAlgorithmException
@@ -25,7 +25,7 @@ public class AESEncryption
 
     public static IvParameterSpec getIvSpec() throws NoSuchAlgorithmException
     {
-        SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");//Reason for this around 20:00 in this video https://www.youtube.com/watch?v=1925zmDP_BY
+        SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
         byte[] random = new byte[16];
         secureRandom.nextBytes(random);
         return new IvParameterSpec(random);

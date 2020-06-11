@@ -18,7 +18,8 @@ import static org.junit.Assert.assertTrue;
 public class GenCertificatesTest
 {
     @Test
-    public void verify() throws Exception {
+    public void verify() throws Exception
+    {
         Security.addProvider(new BouncyCastleProvider());
         GenCertificates.createCertificates("TestCA","TestClient","TestServer");
 
